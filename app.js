@@ -111,7 +111,7 @@
             }
         ];
 
-        // Pagination variables
+           // Pagination variables
         let currentPage = 1;
         const postsPerPage = 6;
         let filteredPosts = [...blogPosts];
@@ -133,19 +133,29 @@
             setupEventListeners();
         }
 
-        // Render blog posts
+        // Enhanced render posts with smooth transitions
         function renderPosts() {
             const startIndex = (currentPage - 1) * postsPerPage;
             const endIndex = startIndex + postsPerPage;
             const postsToShow = filteredPosts.slice(startIndex, endIndex);
 
-            blogGrid.innerHTML = '';
+            // Add transition effect
+            blogGrid.classList.add('transitioning');
+            
+            setTimeout(() => {
+                blogGrid.innerHTML = '';
 
-            postsToShow.forEach((post, index) => {
-                const postElement = createPostElement(post);
-                postElement.style.animationDelay = `${index * 0.1}s`;
-                blogGrid.appendChild(postElement);
-            });
+                postsToShow.forEach((post, index) => {
+                    const postElement = createPostElement(post);
+                    postElement.style.animationDelay = `${index * 0.1}s`;
+                    blogGrid.appendChild(postElement);
+                });
+                
+                // Remove transition effect
+                setTimeout(() => {
+                    blogGrid.classList.remove('transitioning');
+                }, 100);
+            }, 150);
         }
 
         // Create post element
@@ -181,31 +191,96 @@
             return postDiv;
         }
 
-        // Render pagination
+        // Enhanced pagination with page info
         function renderPagination() {
             const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
+            const pageInfo = document.getElementById('pageInfo');
+            
+            // Update page info
+            pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
             
             // Update prev/next buttons
             prevBtn.disabled = currentPage === 1;
-            nextBtn.disabled = currentPage === totalPages;
+            nextBtn.disabled = currentPage === totalPages || totalPages === 0;
 
-            // Render page numbers
+            // Render page numbers with better mobile handling
             pageNumbers.innerHTML = '';
-            for (let i = 1; i <= totalPages; i++) {
-                const pageBtn = document.createElement('button');
-                pageBtn.className = `page-number ${i === currentPage ? 'active' : ''}`;
-                pageBtn.textContent = i;
-                pageBtn.onclick = () => goToPage(i);
+            
+            if (totalPages <= 1) return;
+            
+            // Show fewer page numbers on mobile
+            const isMobile = window.innerWidth <= 480;
+            const maxVisiblePages = isMobile ? 3 : 5;
+            
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            
+            // Adjust start page if we're near the end
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+            
+            // Add first page and ellipsis if needed
+            if (startPage > 1) {
+                const firstPage = createPageButton(1);
+                pageNumbers.appendChild(firstPage);
+                
+                if (startPage > 2) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.textContent = '...';
+                    ellipsis.className = 'page-ellipsis';
+                    ellipsis.style.padding = '0 0.5rem';
+                    ellipsis.style.color = 'var(--text-secondary)';
+                    pageNumbers.appendChild(ellipsis);
+                }
+            }
+            
+            // Add visible page numbers
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = createPageButton(i);
                 pageNumbers.appendChild(pageBtn);
+            }
+            
+            // Add ellipsis and last page if needed
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.textContent = '...';
+                    ellipsis.className = 'page-ellipsis';
+                    ellipsis.style.padding = '0 0.5rem';
+                    ellipsis.style.color = 'var(--text-secondary)';
+                    pageNumbers.appendChild(ellipsis);
+                }
+                
+                const lastPage = createPageButton(totalPages);
+                pageNumbers.appendChild(lastPage);
             }
         }
 
-        // Go to specific page
+        // Helper function to create page buttons
+        function createPageButton(pageNum) {
+            const pageBtn = document.createElement('button');
+            pageBtn.className = `page-number ${pageNum === currentPage ? 'active' : ''}`;
+            pageBtn.textContent = pageNum;
+            pageBtn.onclick = () => goToPage(pageNum);
+            pageBtn.setAttribute('aria-label', `Go to page ${pageNum}`);
+            return pageBtn;
+        }
+
+        // Enhanced go to page with smooth scrolling
         function goToPage(page) {
+            if (page === currentPage) return;
+            
             currentPage = page;
             renderPosts();
             renderPagination();
-            scrollToTop();
+            
+            // Smooth scroll to top of blog grid
+            const blogGridTop = blogGrid.offsetTop - 100;
+            window.scrollTo({
+                top: blogGridTop,
+                behavior: 'smooth'
+            });
         }
 
         // Filter posts by category
