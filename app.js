@@ -8,7 +8,7 @@
                 author: "Sarah Johnson",
                 date: "2024-01-15",
                 category: "web-dev",
-                image: "/1.jpg?height=200&width=400"
+                image: "./1.jpg?height=200&width=400"
             },
             {
                 id: 2,
